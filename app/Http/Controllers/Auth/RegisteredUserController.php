@@ -18,34 +18,38 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request): JsonResponse
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'role' => 'in:admin,client' // ✅ Validation pour les 2 rôles
-        ]);
+   public function store(Request $request): JsonResponse
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|string|email|max:255|unique:users',
+        'password' => 'required|string|min:6|confirmed',
+        'phone' => 'required|string|max:20', // ✅ validation du téléphone
+        'role' => 'in:admin,client'
+    ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $request->role ?? 'client', // ✅ Défaut = client
-        ]);
+    $user = User::create([
+        'name' => $request->name,
+        'email' => $request->email,
+        'password' => Hash::make($request->password),
+        'phone' => $request->phone, // ✅ enregistrement du téléphone
+        'role' => $request->role ?? 'client',
+    ]);
 
-        event(new Registered($user));
+    event(new Registered($user));
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+    $token = $user->createToken('auth_token')->plainTextToken;
 
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'user' => [
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-            ],
-        ]);
-    }
+    return response()->json([
+        'access_token' => $token,
+        'token_type' => 'Bearer',
+        'user' => [
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone, // ✅ renvoyer aussi le téléphone si tu veux
+            'role' => $user->role,
+        ],
+    ]);
+}
+
 }
