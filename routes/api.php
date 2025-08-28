@@ -5,10 +5,10 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use App\Models\User;
 use Illuminate\Validation\ValidationException;
 
 Route::post('/login', function (Request $request) {
+
        \Log::info('Tentative de login API', ['email' => $request->email]);
     try {
         // Validation
@@ -20,7 +20,7 @@ Route::post('/login', function (Request $request) {
         // Tentative d'authentification
         if (!Auth::attempt($credentials)) {
             return response()->json([
-                'message' => 'Email ou mot de passe incorrect ❌',
+                'message' => 'Email ou mot de passe incorrect',
                 'code' => 'INVALID_CREDENTIALS'
             ], 401);
         }
@@ -41,19 +41,33 @@ Route::post('/login', function (Request $request) {
         ]);
     } catch (ValidationException $e) {
         return response()->json([
-            'message' => 'Erreur de validation ⚠️',
+            'message' => 'Erreur de validation',
             'errors' => $e->errors(),
         ], 422);
     } catch (\Exception $e) {
         Log::error('Erreur lors du login', ['exception' => $e]);
 
         return response()->json([
-            'message' => 'Erreur serveur interne 🚨',
+            'message' => 'Erreur serveur interne',
             'error' => $e->getMessage(),
         ], 500);
     }
 });
 
 Route::post('/sign-up',[RegisteredUserController::class ,'store']);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
