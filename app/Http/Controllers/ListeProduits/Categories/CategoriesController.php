@@ -8,54 +8,77 @@ use DB;
 
 class CategoriesController extends Controller
 {
-    public function getCategory()
-    {
-        try {
-            $categories = DB::table('categories')
-                ->select([
-                    'id',
-                    'nom', 
-                    'parent_id',
-                    'status',
-                  
-                ])
-                ->orderBy('parent_id', 'ASC') 
-                ->orderBy('nom', 'ASC')
-                ->get();
+public function getCategory()
+{
+    try {
+        $categories = DB::table('categories')
+            ->select([
+                'id',
+                'nom', 
+                'parent_id',
+                'status',
+            ])
+            ->orderBy('parent_id', 'ASC') 
+            ->orderBy('nom', 'ASC')
+            ->get();
 
-          
-            $transformedCategories = $categories->map(function ($category) use ($categories) {
-                $parentName = null;
-                if ($category->parent_id) {
-                    $parent = $categories->firstWhere('id', $category->parent_id);
-                    $parentName = $parent ? $parent->nom : null;
+        // Fonction récursive pour trouver tous les enfants d'une catégorie
+        function getChildren($parentId, $allCategories) {
+            $children = [];
+            foreach ($allCategories as $category) {
+                if ($category->parent_id == $parentId) {
+                    $child = [
+                        'id' => $category->id,
+                        'nom' => $category->nom,
+                        'parent_id' => $category->parent_id,
+                        'status' => $category->status ?? 'active',
+                        'children' => getChildren($category->id, $allCategories)
+                    ];
+                    $children[] = $child;
                 }
-
-                return [
-                    'id' => $category->id,
-                    'nom' => $category->nom,
-                    'parent_id' => $category->parent_id,
-                    'parent_name' => $parentName,
-                    'is_main_category' => is_null($category->parent_id),
-                    'status' => $category->status ?? 'active',
-                  
-                ];
-            });
-
-            return response()->json([
-                'success' => true,
-                'data' => $transformedCategories,
-                'message' => 'Catégories récupérées avec succès'
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors de la récupération des catégories',
-                'error' => $e->getMessage()
-            ], 500);
+            }
+            return $children;
         }
+
+        // Fonction pour obtenir le nom du parent
+        function getParentName($parentId, $allCategories) {
+            if (!$parentId) return null;
+            $parent = $allCategories->firstWhere('id', $parentId);
+            return $parent ? $parent->nom : null;
+        }
+
+        // Transformer les données avec une structure hiérarchique
+        $transformedCategories = [];
+        foreach ($categories as $category) {
+            $parentName = getParentName($category->parent_id, $categories);
+            
+            $transformedCategory = [
+                'id' => $category->id,
+                'nom' => $category->nom,
+                'parent_id' => $category->parent_id,
+                'parent_name' => $parentName,
+                'is_main_category' => is_null($category->parent_id),
+                'status' => $category->status ?? 'active',
+                'children' => getChildren($category->id, $categories)
+            ];
+            
+            $transformedCategories[] = $transformedCategory;
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $transformedCategories,
+            'message' => 'Catégories récupérées avec succès'
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur lors de la récupération des catégories',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 
 
 
