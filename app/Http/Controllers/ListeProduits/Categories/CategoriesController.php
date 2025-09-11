@@ -57,54 +57,9 @@ class CategoriesController extends Controller
         }
     }
 
-    public function getMainCategories()
-    {
-        try {
-            $mainCategories = DB::table('categories')
-                ->whereNull('parent_id')
-                ->select('id', 'nom', 'status', 'created_at')
-                ->orderBy('nom', 'ASC')
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => $mainCategories,
-                'message' => 'Catégories principales récupérées avec succès'
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors de la récupération des catégories principales',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
 
 
-    public function getSubCategories($parentId)
-    {
-        try {
-            $subCategories = DB::table('categories')
-                ->where('parent_id', $parentId)
-                ->select('id', 'nom', 'status', 'created_at')
-                ->orderBy('nom', 'ASC')
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => $subCategories,
-                'message' => 'Sous-catégories récupérées avec succès'
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors de la récupération des sous-catégories',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
+ 
 
     public function store(Request $request)
     {
@@ -248,70 +203,7 @@ class CategoriesController extends Controller
     }
 
    
-    public function getCategoryTree()
-    {
-        try {
-            $categories = DB::table('categories')
-                ->select('id', 'nom', 'parent_id', 'status')
-                ->orderBy('nom')
-                ->get();
-
-            $tree = $this->buildCategoryTree($categories);
-
-            return response()->json([
-                'success' => true,
-                'data' => $tree,
-                'message' => 'Arbre des catégories récupéré avec succès'
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors de la récupération de l\'arbre des catégories',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
    
-    private function buildCategoryTree($categories, $parentId = null)
-    {
-        $tree = [];
-        
-        foreach ($categories as $category) {
-            if ($category->parent_id == $parentId) {
-                $children = $this->buildCategoryTree($categories, $category->id);
-                $categoryArray = [
-                    'id' => $category->id,
-                    'nom' => $category->nom,
-                    'status' => $category->status,
-                    'children' => $children
-                ];
-                $tree[] = $categoryArray;
-            }
-        }
-        
-        return $tree;
-    }
-
-    
-    private function wouldCreateCircularReference($categoryId, $newParentId)
-    {
-        if (!$newParentId) {
-            return false;
-        }
-
-        $currentId = $newParentId;
-        while ($currentId) {
-            if ($currentId == $categoryId) {
-                return true;
-            }
-            $parent = DB::table('categories')
-                ->where('id', $currentId)
-                ->first();
-            $currentId = $parent ? $parent->parent_id : null;
-        }
-
-        return false;
-    }
+   
+  
 }
