@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\ListeProduits\Categories\CategoriesController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -55,6 +56,20 @@ Route::post('/login', function (Request $request) {
 });
 
 Route::post('/sign-up',[RegisteredUserController::class ,'store']);
+
+
+
+
+
+
+
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////Liste des produits ADMIN SECTION///////////////////////////////////////////////////////
+Route::get('/admin/categories',[CategoriesController::class ,'getCategory']);
 
 
 
