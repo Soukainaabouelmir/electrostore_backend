@@ -70,6 +70,7 @@ Route::post('/sign-up',[RegisteredUserController::class ,'store']);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////Liste des produits ADMIN SECTION///////////////////////////////////////////////////////
 Route::get('/admin/categories',[CategoriesController::class ,'getCategory']);
+Route::post('/admin/categories/store',[CategoriesController::class ,'store']);
 
 
 

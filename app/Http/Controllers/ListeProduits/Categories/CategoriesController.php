@@ -61,44 +61,141 @@ class CategoriesController extends Controller
 
  
 
-    public function store(Request $request)
-    {
-        try {
-            $request->validate([
-                'nom' => 'required|string|max:255',
-                'parent_id' => 'nullable|exists:categories,id',
-                'status' => 'in:active,inactive'
-            ]);
+ public function store(Request $request)
+{
+    try {
+        $request->validate([
+            'nom' => 'required|string|max:255',
+            'parent_id' => 'nullable|exists:categories,id',
+            'status' => 'in:active,inactive',
+            'subCategories' => 'nullable|array',
+            'subCategories.*' => 'string|max:255',
+            'subCategoryData' => 'nullable|array'
+        ]);
 
-            $categoryId = DB::table('categories')->insertGetId([
-                'nom' => $request->nom,
-                'parent_id' => $request->parent_id,
-                'status' => $request->status ?? 'active',
-             
-            ]);
+        DB::beginTransaction();
 
-            $category = DB::table('categories')->where('id', $categoryId)->first();
+        // Créer la catégorie principale
+        $categoryId = DB::table('categories')->insertGetId([
+            'nom' => $request->nom,
+            'parent_id' => $request->parent_id,
+            'status' => $request->status ?? 'active',
+        
+        ]);
 
-            return response()->json([
-                'success' => true,
-                'data' => $category,
-                'message' => 'Catégorie créée avec succès'
-            ], 201);
+        $category = DB::table('categories')->where('id', $categoryId)->first();
+        $createdSubCategories = [];
+        $createdSubSubCategories = [];
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur de validation',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors de la création de la catégorie',
-                'error' => $e->getMessage()
-            ], 500);
+        // Si on a des sous-catégories et que c'est une catégorie principale (pas de parent)
+        if ($request->has('subCategories') && is_array($request->subCategories) && !$request->parent_id) {
+            
+            foreach ($request->subCategories as $subCategoryName) {
+                if (!empty(trim($subCategoryName))) {
+                    // Vérifier que la sous-catégorie n'existe pas déjà
+                    $existingSubCategory = DB::table('categories')
+                        ->where('nom', trim($subCategoryName))
+                        ->where('parent_id', $categoryId)
+                        ->first();
+                    
+                    if (!$existingSubCategory) {
+                        // Créer la sous-catégorie
+                        $subCategoryId = DB::table('categories')->insertGetId([
+                            'nom' => trim($subCategoryName),
+                            'parent_id' => $categoryId,
+                            'status' => 'active',
+                         
+                        ]);
+                        
+                        $createdSubCategories[] = [
+                            'id' => $subCategoryId,
+                            'nom' => trim($subCategoryName),
+                            'parent_id' => $categoryId,
+                            'status' => 'active'
+                        ];
+
+                        // Créer les sous-sous-catégories si elles existent
+                        if ($request->has('subCategoryData') && 
+                            isset($request->subCategoryData[trim($subCategoryName)]) &&
+                            is_array($request->subCategoryData[trim($subCategoryName)])) {
+                            
+                            $subSubCategories = [];
+                            
+                            foreach ($request->subCategoryData[trim($subCategoryName)] as $subSubCategoryName) {
+                                if (!empty(trim($subSubCategoryName))) {
+                                    // Vérifier que la sous-sous-catégorie n'existe pas déjà
+                                    $existingSubSubCategory = DB::table('categories')
+                                        ->where('nom', trim($subSubCategoryName))
+                                        ->where('parent_id', $subCategoryId)
+                                        ->first();
+                                    
+                                    if (!$existingSubSubCategory) {
+                                        $subSubCategoryId = DB::table('categories')->insertGetId([
+                                            'nom' => trim($subSubCategoryName),
+                                            'parent_id' => $subCategoryId,
+                                            'status' => 'active',
+                                         
+                                        ]);
+                                        
+                                        $subSubCategories[] = [
+                                            'id' => $subSubCategoryId,
+                                            'nom' => trim($subSubCategoryName),
+                                            'parent_id' => $subCategoryId,
+                                            'status' => 'active'
+                                        ];
+                                    }
+                                }
+                            }
+                            
+                            if (!empty($subSubCategories)) {
+                                $createdSubSubCategories[trim($subCategoryName)] = $subSubCategories;
+                            }
+                        }
+                    }
+                }
+            }
         }
+
+        DB::commit();
+
+        // Compter le total des catégories créées
+        $totalSubCategories = count($createdSubCategories);
+        $totalSubSubCategories = array_sum(array_map('count', $createdSubSubCategories));
+        
+        $message = 'Catégorie créée avec succès';
+        if ($totalSubCategories > 0) {
+            $message .= ' avec ' . $totalSubCategories . ' sous-catégorie(s)';
+            if ($totalSubSubCategories > 0) {
+                $message .= ' et ' . $totalSubSubCategories . ' sous-sous-catégorie(s)';
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'category' => $category,
+                'subCategories' => $createdSubCategories,
+                'subSubCategories' => $createdSubSubCategories
+            ],
+            'message' => $message
+        ], 201);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        DB::rollBack();
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur de validation',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur lors de la création de la catégorie',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 
 
     public function update(Request $request, $id)
