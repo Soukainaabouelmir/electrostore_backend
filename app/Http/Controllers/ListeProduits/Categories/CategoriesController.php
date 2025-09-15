@@ -22,7 +22,6 @@ public function getCategory()
             ->orderBy('nom', 'ASC')
             ->get();
 
-        // Fonction récursive pour trouver tous les enfants d'une catégorie
         function getChildren($parentId, $allCategories) {
             $children = [];
             foreach ($allCategories as $category) {
@@ -40,29 +39,31 @@ public function getCategory()
             return $children;
         }
 
-        // Fonction pour obtenir le nom du parent
         function getParentName($parentId, $allCategories) {
             if (!$parentId) return null;
             $parent = $allCategories->firstWhere('id', $parentId);
             return $parent ? $parent->nom : null;
         }
 
-        // Transformer les données avec une structure hiérarchique
+        // CHANGEMENT ICI: Ne retourner que les catégories principales (parent_id = null)
         $transformedCategories = [];
         foreach ($categories as $category) {
-            $parentName = getParentName($category->parent_id, $categories);
-            
-            $transformedCategory = [
-                'id' => $category->id,
-                'nom' => $category->nom,
-                'parent_id' => $category->parent_id,
-                'parent_name' => $parentName,
-                'is_main_category' => is_null($category->parent_id),
-                'status' => $category->status ?? 'active',
-                'children' => getChildren($category->id, $categories)
-            ];
-            
-            $transformedCategories[] = $transformedCategory;
+            // Seulement les catégories principales
+            if (is_null($category->parent_id)) {
+                $parentName = getParentName($category->parent_id, $categories);
+                
+                $transformedCategory = [
+                    'id' => $category->id,
+                    'nom' => $category->nom,
+                    'parent_id' => $category->parent_id,
+                    'parent_name' => $parentName,
+                    'is_main_category' => true,
+                    'status' => $category->status ?? 'active',
+                    'children' => getChildren($category->id, $categories)
+                ];
+                
+                $transformedCategories[] = $transformedCategory;
+            }
         }
 
         return response()->json([
@@ -80,10 +81,6 @@ public function getCategory()
     }
 }
 
-
-
- 
-
  public function store(Request $request)
 {
     try {
@@ -98,36 +95,30 @@ public function getCategory()
 
         DB::beginTransaction();
 
-        // Créer la catégorie principale
         $categoryId = DB::table('categories')->insertGetId([
             'nom' => $request->nom,
             'parent_id' => $request->parent_id,
             'status' => $request->status ?? 'active',
-        
         ]);
 
         $category = DB::table('categories')->where('id', $categoryId)->first();
         $createdSubCategories = [];
         $createdSubSubCategories = [];
 
-        // Si on a des sous-catégories et que c'est une catégorie principale (pas de parent)
         if ($request->has('subCategories') && is_array($request->subCategories) && !$request->parent_id) {
             
             foreach ($request->subCategories as $subCategoryName) {
                 if (!empty(trim($subCategoryName))) {
-                    // Vérifier que la sous-catégorie n'existe pas déjà
                     $existingSubCategory = DB::table('categories')
                         ->where('nom', trim($subCategoryName))
                         ->where('parent_id', $categoryId)
                         ->first();
                     
                     if (!$existingSubCategory) {
-                        // Créer la sous-catégorie
                         $subCategoryId = DB::table('categories')->insertGetId([
                             'nom' => trim($subCategoryName),
                             'parent_id' => $categoryId,
                             'status' => 'active',
-                         
                         ]);
                         
                         $createdSubCategories[] = [
@@ -137,7 +128,6 @@ public function getCategory()
                             'status' => 'active'
                         ];
 
-                        // Créer les sous-sous-catégories si elles existent
                         if ($request->has('subCategoryData') && 
                             isset($request->subCategoryData[trim($subCategoryName)]) &&
                             is_array($request->subCategoryData[trim($subCategoryName)])) {
@@ -146,7 +136,6 @@ public function getCategory()
                             
                             foreach ($request->subCategoryData[trim($subCategoryName)] as $subSubCategoryName) {
                                 if (!empty(trim($subSubCategoryName))) {
-                                    // Vérifier que la sous-sous-catégorie n'existe pas déjà
                                     $existingSubSubCategory = DB::table('categories')
                                         ->where('nom', trim($subSubCategoryName))
                                         ->where('parent_id', $subCategoryId)
@@ -181,7 +170,6 @@ public function getCategory()
 
         DB::commit();
 
-        // Compter le total des catégories créées
         $totalSubCategories = count($createdSubCategories);
         $totalSubSubCategories = array_sum(array_map('count', $createdSubSubCategories));
         
@@ -220,7 +208,6 @@ public function getCategory()
     }
 }
 
-
     public function update(Request $request, $id)
     {
         try {
@@ -230,7 +217,6 @@ public function getCategory()
                 'status' => 'in:active,inactive'
             ]);
 
-            // Vérifier que la catégorie ne devient pas son propre parent
             if ($request->parent_id == $id) {
                 return response()->json([
                     'success' => false,
@@ -238,7 +224,6 @@ public function getCategory()
                 ], 422);
             }
 
-            // Vérifier les références circulaires
             if ($this->wouldCreateCircularReference($id, $request->parent_id)) {
                 return response()->json([
                     'success' => false,
@@ -284,7 +269,6 @@ public function getCategory()
             ], 500);
         }
     }
-
     public function destroy($id)
     {
         try {
@@ -323,7 +307,4 @@ public function getCategory()
     }
 
    
-   
-   
-  
 }
