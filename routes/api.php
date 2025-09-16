@@ -77,7 +77,7 @@ Route::post('/admin/categories/store',[CategoriesController::class ,'store']);
 
 //////////////////////////////////////////////Marques/////////////////////////////////////////////////////
 Route::get('/admin/marques',[MarqueController::class , 'getMarque']);
-
+Route::post('/admin/marques/store',[MarqueController::class , 'store']);
 
 
 
