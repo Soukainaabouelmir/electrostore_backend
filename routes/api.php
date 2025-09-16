@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\ListeProduits\Categories\CategoriesController;
+use App\Http\Controllers\ListeProduits\Marque\MarqueController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -69,8 +70,13 @@ Route::post('/sign-up',[RegisteredUserController::class ,'store']);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////Liste des produits ADMIN SECTION///////////////////////////////////////////////////////
+
+//////////////////////////////////////////////Categories//////////////////////////////////////////////////
 Route::get('/admin/categories',[CategoriesController::class ,'getCategory']);
 Route::post('/admin/categories/store',[CategoriesController::class ,'store']);
+
+//////////////////////////////////////////////Marques/////////////////////////////////////////////////////
+Route::get('/admin/marques',[MarqueController::class , 'getMarque']);
 
 
 

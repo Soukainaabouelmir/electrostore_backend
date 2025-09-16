@@ -8,7 +8,7 @@ use DB;
 
 class CategoriesController extends Controller
 {
-public function getCategory()
+    public function getCategory()
 {
     try {
         $categories = DB::table('categories')
@@ -45,10 +45,8 @@ public function getCategory()
             return $parent ? $parent->nom : null;
         }
 
-        // CHANGEMENT ICI: Ne retourner que les catégories principales (parent_id = null)
         $transformedCategories = [];
         foreach ($categories as $category) {
-            // Seulement les catégories principales
             if (is_null($category->parent_id)) {
                 $parentName = getParentName($category->parent_id, $categories);
                 
@@ -80,7 +78,6 @@ public function getCategory()
         ], 500);
     }
 }
-
  public function store(Request $request)
 {
     try {
@@ -207,7 +204,6 @@ public function getCategory()
         ], 500);
     }
 }
-
     public function update(Request $request, $id)
     {
         try {
@@ -305,6 +301,4 @@ public function getCategory()
             ], 500);
         }
     }
-
-   
 }
