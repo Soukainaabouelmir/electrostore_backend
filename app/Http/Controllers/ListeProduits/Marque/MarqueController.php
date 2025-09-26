@@ -194,6 +194,25 @@ public function update(Request $request, $id)
 }
 
 
+public function destroy($id)
+{
+    $marque = DB::table('marques')->where('id', $id)->first();
+
+    if (!$marque) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Marque non trouvée'
+        ], 404);
+    }
+
+    DB::table('marques')->where('id', $id)->delete();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Marque supprimée avec succès'
+    ], 200);
+}
+
 
 
 }

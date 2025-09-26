@@ -79,18 +79,4 @@ Route::post('/admin/categories/store',[CategoriesController::class ,'store']);
 Route::get('/admin/marques',[MarqueController::class , 'getMarque']);
 Route::post('/admin/marques/store',[MarqueController::class , 'store']);
 Route::put('/admin/marques/edit/{id}',[MarqueController::class , 'update']);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Route::delete('/admin/marques/delete/{id}', [MarqueController::class , 'destroy']);
