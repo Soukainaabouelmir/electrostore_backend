@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\ListeProduits\Categories\CategoriesController;
 use App\Http\Controllers\ListeProduits\Marque\MarqueController;
+use App\Http\Controllers\ListeProduits\Produits\ProduitsController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -80,3 +81,8 @@ Route::get('/admin/marques',[MarqueController::class , 'getMarque']);
 Route::post('/admin/marques/store',[MarqueController::class , 'store']);
 Route::put('/admin/marques/edit/{id}',[MarqueController::class , 'update']);
 Route::delete('/admin/marques/delete/{id}', [MarqueController::class , 'destroy']);
+
+
+
+////////////////////////////////////////////////Products//////////////////////////////////////////////::///
+Route::get('/admin/products',[ProduitsController::class , 'getProducts']);
