@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\ListeProduits\Categories\CategoriesController;
 use App\Http\Controllers\ListeProduits\Marque\MarqueController;
 use App\Http\Controllers\ListeProduits\Produits\ProduitsController;
+use App\Http\Controllers\Popup\PopupController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -66,10 +67,6 @@ Route::post('/sign-up',[RegisteredUserController::class ,'store']);
 
 
 
-
-
-
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////Liste des produits ADMIN SECTION///////////////////////////////////////////////////////
 
 //////////////////////////////////////////////Categories//////////////////////////////////////////////////
@@ -84,7 +81,16 @@ Route::delete('/admin/marques/delete/{id}', [MarqueController::class , 'destroy'
 
 
 
-////////////////////////////////////////////////Products//////////////////////////////////////////////::///
+///////////////////////////////////////////////////////////////////////////////////////Products/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 Route::get('/admin/products',[ProduitsController::class , 'getProducts']);
 Route::post('/products/import', [ProduitsController::class, 'importProducts']);
 Route::get('/products/template', [ProduitsController::class, 'downloadTemplate']);
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////Pop_ups/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Route::get('/admin/popups',[PopupController::class,'getPopups']);
+Route::post('/admin/popups/store',[PopupController::class,'store']);
+Route::put('/admin/popups/edit/{id}',[PopupController::class,'update']);
+Route::delete('/admin/popups/delete/{id}', [PopupController::class,'destroy']);
