@@ -83,6 +83,7 @@ Route::delete('/admin/marques/delete/{id}', [MarqueController::class , 'destroy'
 
 ///////////////////////////////////////////////////////////////////////////////////////Products/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 Route::get('/admin/products',[ProduitsController::class , 'getProducts']);
+Route::post('/admin/products/store', [ProduitsController::class, 'store']);
 Route::post('/products/import', [ProduitsController::class, 'importProducts']);
 Route::get('/products/template', [ProduitsController::class, 'downloadTemplate']);
 
